@@ -22,14 +22,14 @@ class Http implements Runnable {
     }
 
     private void selectCode(OutputStream output, String readLoop, String method) {
+        String url = getUrl(readLoop);
+
         switch (method) {
             case "GET": {
-                String url = getRequestURL(readLoop);
                 sendFile(url, output, false);
                 break;
             }
             case "HEAD": {
-                String url = getRequestURL(readLoop);
                 sendFile(url, output, true);
                 break;
             }
@@ -54,28 +54,35 @@ class Http implements Runnable {
         return builder.toString();
     }
 
-    private String getRequestURL(String header) {
-        int from = header.indexOf(" ") + 1;
-        if (from == 0)
+    private String getUrl(String header) {
+        int fr = header.indexOf(" ") + 1;
+        if (fr == 0) {
             return DIR_FILES + "/index.html";
+        }
 
-        int to = header.indexOf(" ", from);
-        if (to == -1)
+        int to = header.indexOf(" ", fr);
+        if (to == -1) {
             return DIR_FILES + "/index.html";
+        }
 
-        String url = header.substring(from, to);
+        String url = header.substring(fr, to);
         url = java.net.URLDecoder.decode(url, StandardCharsets.UTF_8);
-        if (url.lastIndexOf("/") == url.length() - 1)
-            if (!url.contains("."))
+        if (url.lastIndexOf("/") == url.length() - 1) {
+            if (!url.contains(".")) {
                 return DIR_FILES + url + "index.html";
-            else url += "badPath";
+            } else {
+                url += "badPath";
+            }
+        }
 
         int paramIndex = url.indexOf("?");
-        if (paramIndex != -1)
+        if (paramIndex != -1) {
             url = url.substring(0, paramIndex);
+        }
 
-        if (isURLDangerous(url))
+        if (checkAlert(url)) {
             return null;
+        }
 
         return DIR_FILES + url;
     }
@@ -91,7 +98,7 @@ class Http implements Runnable {
     }
 
     private void header(OutputStream out, int code, String mime, int size) {
-        String header = createResponseHeader(code, mime, size);
+        String header = createHeader(code, mime, size);
         (new PrintStream(out, true, StandardCharsets.UTF_8)).print(header);
     }
 
@@ -100,6 +107,7 @@ class Http implements Runnable {
             header(out, 403, null, 0);
             return;
         }
+
         int code = 200;
         String mime = null;
         int size = 0;
@@ -115,6 +123,7 @@ class Http implements Runnable {
             if (!isHead) {
                 int count;
                 byte[] buffer = new byte[SIZE];
+                
                 while ((count = fin.read(buffer)) > 0) {
                     out.write(buffer, 0, count);
                 }
@@ -124,23 +133,28 @@ class Http implements Runnable {
             ex.printStackTrace();
             code = url.contains("/index.html") ? 403 : 404;
         }
-        if (code != 200)
+
+        if (code != 200) {
             header(out, code, mime, size);
+        }
     }
 
-    private String createResponseHeader(int code, String contentType, int contentLength) {
+    private String createHeader(int code, String contentType, int contentLength) {
         StringBuilder buffer = new StringBuilder();
         buffer.append("HTTP/1.1 ").append(code).append(" ").append(getAnswer(code)).append(CRLF);
-        buffer.append("Server: Java web-server" + CRLF);
+        buffer.append("Server: Java server" + CRLF);
         buffer.append("Connection: close" + CRLF);
         buffer.append("Date: ").append(new Date()).append(CRLF);
         buffer.append("Accept-Ranges: none " + CRLF);
 
         if (code == 200) {
-            if (contentType != null)
+            if (contentType != null) {
                 buffer.append("Content-Type: ").append(contentType).append(CRLF);
-            if (contentLength != 0)
+            }
+
+            if (contentLength != 0) {
                 buffer.append("Content-Length: ").append(contentLength).append(CRLF);
+            }
         }
         
         buffer.append(CRLF);
@@ -182,19 +196,20 @@ class Http implements Runnable {
         return count ;
     }
 
-    private Boolean isURLDangerous(String url) {
+    private Boolean checkAlert(String url) {
         int backnesting = subStrInStr(url, "/..");
+
         if (backnesting > 0) {
-            int nesting = subStrInStr(url, "/") - 2 * backnesting;
-            return nesting < 0;
+            return subStrInStr(url, "/") - 2 * backnesting < 0;
         }
+
         return false;
     }
 
     @Override
     public void run() {
-        InputStream input = null;
         OutputStream output = null;
+        InputStream input = null;
 
         try {
             socket.setSoTimeout(this.TIMEOUT);
@@ -223,11 +238,13 @@ class Http implements Runnable {
             } catch (IOException e) {
                 
             }
+
             try {
-                if (output != null)
+                if (output != null) {
                     output.close();
-                else
+                } else {
                     socket.close();
+                }
             } catch (IOException e) {
                 
             }

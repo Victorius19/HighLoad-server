@@ -6,11 +6,11 @@ class ThreadPool {
     private final int limit;
     private final LinkedList<Runnable> queue;
 
-    ThreadPool(int threadsAmount, int tasksAmount) {
-        this.limit = tasksAmount;
+    ThreadPool(int count, int limit) {
+        this.limit = limit;
         this.queue = new LinkedList<>();
 
-        for (int i = 0; i < threadsAmount; i++) {
+        for (int i = 0; i < count; i++) {
             new Thread(new ServerThread()).start();
         }
     }

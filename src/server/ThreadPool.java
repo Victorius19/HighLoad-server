@@ -3,7 +3,6 @@ package server;
 import java.util.LinkedList;
 
 class ThreadPool {
-    private volatile boolean isStopped = false;
     private final int limit;
     private final LinkedList<Runnable> queue;
 

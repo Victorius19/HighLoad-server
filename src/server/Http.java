@@ -7,12 +7,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Date;
 
-class Http implements Runnable{
+class Http implements Runnable {
+    private final static char CR  = (char) 0x0D;
+    private final static char LF  = (char) 0x0A;
+    private final static String CRLF  = "" + CR + LF;
     protected Socket socket;
     private static String DIR_FILES;
-    private static final int BUFFER_SIZE = 2048;
+    private static final int SIZE = 2048;
     private final int TIMEOUT = 15000;
-    private final static String CRLF  = "" + (char) 0x0D + (char) 0x0A;
 
     Http(Socket socket) {
         this.socket = socket;
@@ -112,7 +114,7 @@ class Http implements Runnable{
 
             if (!isHead) {
                 int count;
-                byte[] buffer = new byte[BUFFER_SIZE];
+                byte[] buffer = new byte[SIZE];
                 while ((count = fin.read(buffer)) > 0) {
                     out.write(buffer, 0, count);
                 }
